@@ -3,6 +3,12 @@ const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET');
+  next();
+});
+
 function getInfrastructureStatus() {
   return {
     cpu: 10,
