@@ -1,0 +1,9 @@
+services:
+  portfolio-api:
+    build: .
+    container_name: portfolio-api
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+    restart: unless-stopped
