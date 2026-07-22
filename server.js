@@ -95,6 +95,48 @@ async function getRunningContainerCount() {
     .length;
 }
 
+function parseDockerContainerLine(line) {
+  const [name = '', image = '', status = '', state = '', ports = ''] = line
+    .split('|')
+    .map((value) => value.trim());
+  const normalizedState = state.toLowerCase();
+
+  return {
+    name,
+    image,
+    status,
+    state: normalizedState,
+    ports: ports || 'None',
+    running: normalizedState === 'running',
+  };
+}
+
+async function getDockerContainers() {
+  const { stdout } = await execFileAsync(
+    'docker',
+    ['ps', '-a', '--format', '{{.Names}}|{{.Image}}|{{.Status}}|{{.State}}|{{.Ports}}'],
+    {
+      timeout: 8000,
+      maxBuffer: 1024 * 1024,
+    },
+  );
+
+  const containers = stdout
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .map(parseDockerContainerLine);
+  const running = containers.filter((container) => container.running).length;
+
+  return {
+    total: containers.length,
+    running,
+    stopped: containers.length - running,
+    containers,
+    lastUpdated: new Date().toISOString(),
+  };
+}
+
 function formatUptime(seconds) {
   const days = Math.floor(seconds / 86400);
   const hours = Math.floor((seconds % 86400) / 3600);
@@ -153,6 +195,17 @@ app.get('/', (req, res) => {
 
 app.get('/api/status', async (req, res) => {
   res.json(await getInfrastructureStatus());
+});
+
+app.get('/api/containers', async (req, res) => {
+  try {
+    res.json(await getDockerContainers());
+  } catch (error) {
+    console.error(`Docker container collection failed: ${error.message}`);
+    res.status(500).json({
+      error: 'Unable to load Docker containers',
+    });
+  }
 });
 
 app.listen(PORT, () => {

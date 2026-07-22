@@ -1,8 +1,6 @@
 # Portfolio API
 
-Small Node.js and Express API for portfolio infrastructure metrics.
-
-The metrics are hardcoded for now. The status helper in `server.js` is the place to replace them later with live Docker, Proxmox, or host metrics.
+Small Node.js and Express API for portfolio infrastructure metrics and a read-only Docker container overview.
 
 ## Endpoints
 
@@ -25,7 +23,30 @@ The metrics are hardcoded for now. The status helper in `server.js` is the place
   "containers": 3,
   "uptime": "1 day",
   "ssl": "Valid",
-  "lastDeploy": "2 minutes ago"
+  "lastUpdated": "2026-07-22T20:45:00.000Z"
+}
+```
+
+### `GET /api/containers`
+
+Returns a read-only overview of Docker containers from the Docker CLI.
+
+```json
+{
+  "total": 3,
+  "running": 3,
+  "stopped": 0,
+  "containers": [
+    {
+      "name": "portfolio",
+      "image": "nginx:alpine",
+      "status": "Up 2 days",
+      "state": "running",
+      "ports": "0.0.0.0:8080->80/tcp",
+      "running": true
+    }
+  ],
+  "lastUpdated": "2026-07-22T20:45:00.000Z"
 }
 ```
 
@@ -54,7 +75,7 @@ http://localhost:3000
 Build and start the container:
 
 ```bash
-docker compose up --build
+docker compose up -d --build
 ```
 
 Stop it:
